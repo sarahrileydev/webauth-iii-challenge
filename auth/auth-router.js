@@ -5,20 +5,25 @@ const secrets = require("../config/secrets");
 
 const Users = require("../users/users-model.js");
 
-// for endpoints beginning with /api/auth
+
 router.post("/register", (req, res) => {
   let user = req.body;
-  const hash = bcrypt.hashSync(user.password, 10); // 2 ^ n
+  const hash = bcrypt.hashSync(user.password, 10);
   user.password = hash;
 
   Users.add(user)
     .then(saved => {
-      res.status(201).json(saved);
+      
+      const token = generateToken(saved);
+      console.log("token", saved);
+      res.status(201).json({message: `Welcome ${saved.username}!`, token});
     })
     .catch(error => {
+      console.log("random");
       res.status(500).json(error);
     });
 });
+
 
 router.post("/login", (req, res) => {
   let { username, password } = req.body;
@@ -46,7 +51,7 @@ function generateToken(user) {
   const payload = {
     subject: user.id,
     username: user.username,
-    roles: ["Student"]
+    department: user.department
   };
 
   const options = {
